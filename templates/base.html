@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}The College Underground - Unofficial Campus Network{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['selector', '[data-theme="dark"]'],
+        }
+    </script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Stylesheet (TheFacebook 2004 x Modern Instagram) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-[#f0f2f5] min-h-screen text-slate-800 transition-colors duration-200">
+
+    <!-- Top Retro TheFacebook Navigation Bar -->
+    <header class="retro-header-bar sticky top-0 z-50 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            
+            <!-- Logo & Campus Tagline -->
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('index') }}" class="flex items-baseline gap-2 group">
+                    <span class="brand-font text-2xl font-bold tracking-tight text-white group-hover:text-blue-200 transition">[thecollege]</span>
+                    <span class="hidden sm:inline text-[10px] uppercase tracking-wider text-blue-200 font-semibold bg-blue-900/60 px-2 py-0.5 rounded border border-blue-400/30">unofficial</span>
+                </a>
+            </div>
+
+            <!-- Global Search Bar with Live Autocomplete -->
+            <div class="relative flex-1 max-w-md mx-3">
+                <div class="relative">
+                    <input type="text" id="global-search-input" placeholder="Search students, dorms, majors, courses..." 
+                        class="w-full bg-[#203a6d] placeholder-blue-300 text-white text-xs rounded-full pl-9 pr-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-white border border-blue-400/40 transition">
+                    <i class="fas fa-search absolute left-3 top-2 text-blue-300 text-xs"></i>
+                </div>
+                <!-- Autocomplete Dropdown -->
+                <div id="search-dropdown-results" class="hidden absolute left-0 right-0 top-10 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-80 overflow-y-auto text-slate-800"></div>
+            </div>
+
+            <!-- Right Nav: Actions, Messages, Requests, Persona Switcher & Theme Toggle -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                
+                <!-- Dark Mode / Classic Blue Theme Toggle -->
+                <button onclick="toggleTheme()" id="theme-toggle-btn" class="p-1.5 text-blue-200 hover:text-white rounded-full hover:bg-blue-900/40 transition text-xs" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+
+                <!-- Messages / DMs Icon -->
+                <a href="{{ url_for('messages_view') }}" class="relative p-1.5 text-blue-200 hover:text-white rounded-full hover:bg-blue-900/40 transition text-xs flex items-center" title="Campus Messages">
+                    <i class="fas fa-paper-plane text-sm"></i>
+                    {% if unread_msg_count > 0 %}
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{{ unread_msg_count }}</span>
+                    {% endif %}
+                </a>
+
+                <!-- Friend Requests Dropdown Indicator -->
+                <div class="relative group">
+                    <button class="relative p-1.5 text-blue-200 hover:text-white rounded-full hover:bg-blue-900/40 transition text-xs flex items-center" title="Friend Requests">
+                        <i class="fas fa-user-friends text-sm"></i>
+                        {% if pending_friend_requests %}
+                        <span class="absolute -top-1 -right-1 bg-blue-400 text-blue-950 text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{{ pending_friend_requests|length }}</span>
+                        {% endif %}
+                    </button>
+                    
+                    <!-- Dropdown Content -->
+                    <div class="hidden group-hover:block absolute right-0 top-8 w-72 bg-white text-slate-800 rounded-lg shadow-2xl border border-gray-200 p-3 z-50 text-xs">
+                        <div class="font-bold text-gray-700 border-b pb-1.5 mb-2 flex items-center justify-between">
+                            <span>Pending Friend Requests</span>
+                            <span class="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">{{ pending_friend_requests|length }}</span>
+                        </div>
+                        {% if pending_friend_requests %}
+                        <div class="space-y-2 max-h-60 overflow-y-auto">
+                            {% for req in pending_friend_requests %}
+                            <div class="flex items-center justify-between gap-2 py-1.5 border-b border-gray-100 last:border-b-0">
+                                <a href="{{ url_for('profile', student_id=req.id) }}" class="flex items-center gap-2 truncate">
+                                    <img src="{{ req.avatar }}" class="w-7 h-7 rounded-full object-cover">
+                                    <div class="truncate">
+                                        <div class="font-bold truncate">{{ req.name }}</div>
+                                        <div class="text-[10px] text-gray-400 truncate">{{ req.department }}</div>
+                                    </div>
+                                </a>
+                                <div class="flex items-center gap-1 flex-shrink-0">
+                                    <button onclick="handleFriendAction('{{ req.id }}', 'accept', this)" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-2 py-1 rounded">Accept</button>
+                                    <button onclick="handleFriendAction('{{ req.id }}', 'decline', this)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-[10px] px-1.5 py-1 rounded">Decline</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-gray-400 text-center py-3 text-xs">No pending requests</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Pokes Indicator -->
+                {% if poke_notifications %}
+                <div class="relative group">
+                    <button class="flex items-center gap-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/40 text-xs px-2.5 py-1 rounded-full font-medium transition" title="Pokes received">
+                        👉 <span class="font-bold">{{ poke_notifications|length }}</span>
+                    </button>
+                    <div class="hidden group-hover:block absolute right-0 top-8 w-64 bg-white text-slate-800 rounded-lg shadow-xl border border-gray-200 p-2 z-50 text-xs">
+                        <div class="font-bold text-gray-700 border-b pb-1 mb-1">Recent Pokes</div>
+                        {% for p in poke_notifications %}
+                        <div class="flex items-center justify-between py-1 border-b border-gray-100 last:border-b-0">
+                            <span class="font-semibold truncate">{{ p.name }} poked you!</span>
+                            <button onclick="pokeStudent('{{ p.id }}', '{{ p.name }}', this)" class="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded hover:bg-blue-700">Poke back</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Persona Switcher Dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center gap-2 bg-[#203a6d] hover:bg-[#182e57] border border-blue-400/30 rounded-full pl-1.5 pr-3 py-1 text-xs transition">
+                        <img src="{{ current_user.avatar }}" alt="{{ current_user.name }}" class="w-6 h-6 rounded-full object-cover border border-white/40">
+                        <span class="hidden md:inline font-medium text-blue-100">You: {{ current_user.name.split(' ')[0] }}</span>
+                        <i class="fas fa-chevron-down text-[10px] text-blue-300"></i>
+                    </button>
+                    
+                    <div class="hidden group-hover:block absolute right-0 top-9 w-60 bg-white text-slate-800 rounded-lg shadow-2xl border border-gray-200 p-2 z-50 text-xs max-h-96 overflow-y-auto">
+                        <div class="px-2 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Switch Student Persona</div>
+                        {% for s in all_students_menu %}
+                        <button onclick="switchUserPersona('{{ s.id }}')" class="w-full text-left flex items-center gap-2.5 px-2 py-1.5 hover:bg-blue-50 rounded transition {% if s.id == current_user.id %}bg-blue-100 font-bold text-blue-900{% endif %}">
+                            <img src="{{ s.avatar }}" class="w-6 h-6 rounded-full object-cover">
+                            <div class="truncate">
+                                <div class="truncate text-gray-900 leading-tight">{{ s.name }}</div>
+                                <div class="text-[10px] text-gray-500">{{ s.department }} • {{ s.batch_title }}</div>
+                            </div>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+            <!-- LEFT COLUMN: Classic 2004 TheFacebook Collegiate Sidebar (3 cols) -->
+            <aside class="md:col-span-3 space-y-4">
+                
+                <!-- Navigation Box -->
+                <div class="retro-box rounded-md p-3">
+                    <div class="border-b border-[#d8dfea] pb-2 mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-500">[ Navigation ]</span>
+                    </div>
+                    <nav class="space-y-1">
+                        <a href="{{ url_for('profile', student_id=current_user.id) }}" class="retro-sidebar-link {% if active_tab == 'profile' %}active{% endif %}">
+                            <i class="fas fa-id-badge w-5 text-center mr-2"></i> My Profile
+                        </a>
+                        <a href="{{ url_for('index') }}" class="retro-sidebar-link {% if active_tab == 'feed' %}active{% endif %}">
+                            <i class="fas fa-rss w-5 text-center mr-2"></i> The Wire (Campus Feed)
+                        </a>
+                        <a href="{{ url_for('messages_view') }}" class="retro-sidebar-link {% if active_tab == 'messages' %}active{% endif %}">
+                            <i class="fas fa-comments w-5 text-center mr-2"></i> Campus Messenger (DMs)
+                        </a>
+                        <a href="{{ url_for('directory') }}" class="retro-sidebar-link {% if active_tab == 'directory' %}active{% endif %}">
+                            <i class="fas fa-address-book w-5 text-center mr-2"></i> Student Directory
+                        </a>
+                        <a href="{{ url_for('leaderboard') }}" class="retro-sidebar-link {% if active_tab == 'leaderboard' %}active{% endif %}">
+                            <i class="fas fa-trophy w-5 text-center mr-2"></i> Course Leaderboards
+                        </a>
+                        <a href="{{ url_for('polls') }}" class="retro-sidebar-link {% if active_tab == 'polls' %}active{% endif %}">
+                            <i class="fas fa-poll-h w-5 text-center mr-2"></i> Campus Polls
+                        </a>
+                        <a href="{{ url_for('events') }}" class="retro-sidebar-link {% if active_tab == 'events' %}active{% endif %}">
+                            <i class="fas fa-calendar-alt w-5 text-center mr-2"></i> Events & Fests
+                        </a>
+                        <a href="{{ url_for('confessions') }}" class="retro-sidebar-link {% if active_tab == 'confessions' %}active{% endif %}">
+                            <i class="fas fa-mask w-5 text-center mr-2"></i> Campus Confessions
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Current User Mini Card -->
+                <div class="retro-box rounded-md p-3 text-xs">
+                    <div class="flex items-center gap-3 mb-3">
+                        <img src="{{ current_user.avatar }}" class="w-12 h-12 rounded-md object-cover border border-gray-300">
+                        <div>
+                            <div class="font-bold text-gray-900 text-sm">{{ current_user.name }}</div>
+                            <div class="text-gray-500">{{ current_user.department }}</div>
+                            <div class="text-blue-700 font-semibold mt-0.5">Karma: {{ current_user.karma }} pts</div>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-200 pt-2 space-y-1 text-gray-600">
+                        <div><strong class="text-gray-700">Dorm:</strong> {{ current_user.dorm }}</div>
+                        <div><strong class="text-gray-700">Batch:</strong> {{ current_user.batch_title }} (Class of '{{ current_user.batch_year }}')</div>
+                        <div><strong class="text-gray-700">GPA:</strong> {{ current_user.gpa }}</div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-200 flex gap-2">
+                        <a href="{{ url_for('profile', student_id=current_user.id) }}" class="w-full text-center bg-[#3b5998] hover:bg-[#2b4780] text-white py-1.5 rounded font-semibold text-xs transition">
+                            View & Edit Profile
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Classic TheFacebook 2004 Disclaimer -->
+                <div class="retro-box rounded-md p-3 text-[11px] text-gray-500 space-y-2 bg-[#fdfdfd]">
+                    <div class="font-bold text-gray-700 uppercase tracking-wider text-[10px]">[ The College Underground ]</div>
+                    <p>An unofficial online social directory connecting college students through dorms, courses, and friends.</p>
+                    <p class="text-[10px] text-gray-400">Everything is editable! Customize profiles, create polls, and publish events.</p>
+                </div>
+
+            </aside>
+
+            <!-- CENTER COLUMN: Page Content Block (6 cols on desktop, full on mobile) -->
+            <section class="md:col-span-6 space-y-6">
+                {% block content %}{% endblock %}
+            </section>
+
+            <!-- RIGHT COLUMN: Campus Pulse & Quick Widgets (3 cols) -->
+            <aside class="md:col-span-3 space-y-4">
+                
+                <!-- Quick Action Bar -->
+                <div class="retro-box rounded-md p-3">
+                    <div class="border-b border-[#d8dfea] pb-1.5 mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-500">[ Quick Campus Actions ]</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="openModal('create-post-modal')" class="flex flex-col items-center justify-center p-2.5 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 text-blue-800 transition">
+                            <i class="fas fa-pen-nib text-base mb-1"></i>
+                            <span class="text-[11px] font-bold">New Post</span>
+                        </button>
+                        <button onclick="openModal('create-poll-modal')" class="flex flex-col items-center justify-center p-2.5 bg-purple-50 hover:bg-purple-100 rounded border border-purple-200 text-purple-800 transition">
+                            <i class="fas fa-chart-pie text-base mb-1"></i>
+                            <span class="text-[11px] font-bold">Start Poll</span>
+                        </button>
+                        <a href="{{ url_for('messages_view') }}" class="flex flex-col items-center justify-center p-2.5 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200 text-emerald-800 transition">
+                            <i class="fas fa-paper-plane text-base mb-1"></i>
+                            <span class="text-[11px] font-bold">Direct DMs</span>
+                        </a>
+                        <button onclick="openModal('add-student-modal')" class="flex flex-col items-center justify-center p-2.5 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200 text-amber-800 transition">
+                            <i class="fas fa-user-plus text-base mb-1"></i>
+                            <span class="text-[11px] font-bold">Add Student</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Top Campus Ranker Widget -->
+                {% if top_students %}
+                <div class="retro-box rounded-md p-3">
+                    <div class="border-b border-[#d8dfea] pb-1.5 mb-2 flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-500">[ Top Campus Karma ]</span>
+                        <a href="{{ url_for('leaderboard') }}" class="text-[11px] text-blue-600 hover:underline">Full Board</a>
+                    </div>
+                    <div class="space-y-2">
+                        {% for ranker in top_students %}
+                        <a href="{{ url_for('profile', student_id=ranker.id) }}" class="flex items-center gap-2.5 p-1.5 hover:bg-gray-50 rounded transition group">
+                            <span class="w-5 text-center font-bold text-xs {% if loop.index == 1 %}text-amber-500{% elif loop.index == 2 %}text-slate-400{% elif loop.index == 3 %}text-amber-700{% else %}text-gray-400{% endif %}">
+                                #{{ loop.index }}
+                            </span>
+                            <img src="{{ ranker.avatar }}" class="w-8 h-8 rounded-full object-cover border border-gray-300">
+                            <div class="flex-1 truncate">
+                                <div class="text-xs font-bold text-gray-900 group-hover:text-blue-700 truncate">{{ ranker.name }}</div>
+                                <div class="text-[10px] text-gray-500">{{ ranker.department }}</div>
+                            </div>
+                            <span class="text-xs font-semibold text-blue-700">{{ ranker.karma }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Next Upcoming Event Widget -->
+                {% if next_event %}
+                <div class="retro-box rounded-md p-3">
+                    <div class="border-b border-[#d8dfea] pb-1.5 mb-2 flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-500">[ Next Campus Event ]</span>
+                        <a href="{{ url_for('events') }}" class="text-[11px] text-blue-600 hover:underline">All Events</a>
+                    </div>
+                    <div class="rounded overflow-hidden border border-gray-200 mb-2">
+                        <img src="{{ next_event.image_url }}" class="w-full h-24 object-cover">
+                    </div>
+                    <div class="font-bold text-xs text-gray-900 leading-snug">{{ next_event.title }}</div>
+                    <div class="text-[11px] text-blue-700 font-medium mt-1"><i class="far fa-clock mr-1"></i> {{ next_event.date_str }}</div>
+                    <div class="text-[11px] text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i> {{ next_event.location }}</div>
+                    <div class="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between">
+                        <span class="text-[11px] text-gray-600 font-semibold">{{ next_event.going_count }} students going</span>
+                        <a href="{{ url_for('events') }}" class="text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded font-bold transition">RSVP</a>
+                    </div>
+                </div>
+                {% endif %}
+
+            </aside>
+
+        </div>
+    </main>
+
+    <!-- Global Modal: Create New Post -->
+    <div id="create-post-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-lg w-full p-5 shadow-2xl border border-gray-300">
+            <div class="flex items-center justify-between border-b pb-3 mb-4">
+                <div class="font-bold text-sm text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-pen-square text-blue-600 text-lg"></i> Share with Campus Wire
+                </div>
+                <button onclick="closeModal('create-post-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <form action="{{ url_for('create_post') }}" method="POST" class="space-y-4">
+                <div>
+                    <textarea name="content" rows="4" placeholder="What's happening around campus, {{ current_user.name.split(' ')[0] }}? (Hackathon updates, canteen reviews, course doubts...)" required class="w-full p-3 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Image URL (optional)</label>
+                    <input type="url" name="image_url" placeholder="https://images.unsplash.com/..." class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Tags (optional)</label>
+                    <input type="text" name="tags" placeholder="#CampusLife #Hackathon #LibraryGrind" class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button type="button" onclick="closeModal('create-post-modal')" class="px-4 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                    <button type="submit" class="px-5 py-2 text-xs font-bold bg-[#3b5998] hover:bg-[#2b4780] text-white rounded shadow-sm">Post to Wire (+10 Karma)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Global Modal: Create New Poll -->
+    <div id="create-poll-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-lg w-full p-5 shadow-2xl border border-gray-300">
+            <div class="flex items-center justify-between border-b pb-3 mb-4">
+                <div class="font-bold text-sm text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-poll text-purple-600 text-lg"></i> Launch Campus Poll
+                </div>
+                <button onclick="closeModal('create-poll-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <form action="{{ url_for('create_poll') }}" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Poll Question</label>
+                    <input type="text" name="question" placeholder="e.g. Which dorm throws the best roof party?" required class="w-full p-2.5 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Category</label>
+                    <select name="category" class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-purple-500">
+                        <option value="Food & Hangouts">Food & Hangouts</option>
+                        <option value="Campus Life">Campus Life</option>
+                        <option value="Academics">Academics</option>
+                        <option value="Fest Buzz">Fest Buzz</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-bold text-gray-700">Options (at least 2)</label>
+                    <input type="text" name="options[]" placeholder="Option 1" required class="w-full p-2 text-xs border border-gray-300 rounded">
+                    <input type="text" name="options[]" placeholder="Option 2" required class="w-full p-2 text-xs border border-gray-300 rounded">
+                    <input type="text" name="options[]" placeholder="Option 3 (optional)" class="w-full p-2 text-xs border border-gray-300 rounded">
+                    <input type="text" name="options[]" placeholder="Option 4 (optional)" class="w-full p-2 text-xs border border-gray-300 rounded">
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button type="button" onclick="closeModal('create-poll-modal')" class="px-4 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                    <button type="submit" class="px-5 py-2 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white rounded shadow-sm">Launch Poll (+15 Karma)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Global Modal: Add New Student -->
+    <div id="add-student-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-lg w-full p-5 shadow-2xl border border-gray-300 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b pb-3 mb-4">
+                <div class="font-bold text-sm text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-user-plus text-amber-600 text-lg"></i> Add New Student to Campus Directory
+                </div>
+                <button onclick="closeModal('add-student-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="handleCreateStudent(event, this)" class="space-y-3 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Full Name *</label>
+                        <input type="text" name="name" placeholder="Alex Taylor" required class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Roll Number *</label>
+                        <input type="text" name="roll_no" placeholder="2024CS109" required class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Handle (@)</label>
+                        <input type="text" name="handle" placeholder="alext" class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Department *</label>
+                        <select name="department" class="w-full p-2 border border-gray-300 rounded">
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Mechanical Engineering">Mechanical Engineering</option>
+                            <option value="Electrical Engineering">Electrical Engineering</option>
+                            <option value="Business Administration">Business Administration</option>
+                            <option value="Biotechnology">Biotechnology</option>
+                            <option value="Design & Arts">Design & Arts</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Class</label>
+                        <select name="batch_title" class="w-full p-2 border border-gray-300 rounded">
+                            <option value="Freshman">Freshman</option>
+                            <option value="Sophomore">Sophomore</option>
+                            <option value="Junior">Junior</option>
+                            <option value="Senior">Senior</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Batch Year</label>
+                        <input type="number" name="batch_year" value="2027" class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">GPA</label>
+                        <input type="number" step="0.01" name="gpa" value="3.85" class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Dorm / Hall</label>
+                        <input type="text" name="dorm" placeholder="Eliot House #104" class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Hometown</label>
+                        <input type="text" name="hometown" placeholder="Seattle, WA" class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Bio</label>
+                    <textarea name="bio" rows="2" placeholder="Tell the campus about yourself..." class="w-full p-2 border border-gray-300 rounded"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Avatar Image URL</label>
+                        <input type="url" name="avatar" placeholder="https://images.unsplash.com/..." class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Banner Image URL</label>
+                        <input type="url" name="banner" placeholder="https://images.unsplash.com/..." class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeModal('add-student-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                    <button type="submit" class="px-5 py-2 font-bold bg-amber-600 hover:bg-amber-700 text-white rounded">Add Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Frontend Script -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

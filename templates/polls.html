@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Campus Polls - Pulse of the Quad | The College Underground{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Polls Header Banner -->
+    <div class="retro-box rounded-md p-4 bg-gradient-to-r from-purple-800 to-indigo-900 text-white shadow-sm flex items-center justify-between">
+        <div>
+            <div class="ivy-seal-text text-sm uppercase tracking-widest text-purple-200">Campus Deliberation</div>
+            <h1 class="text-xl font-bold font-serif tracking-tight mt-0.5">Pulse of the Quad: Campus Polls</h1>
+            <p class="text-xs text-purple-200 mt-1 max-w-lg">
+                Cast your vote, edit questions, or launch your own poll. Earn 2 Karma for every vote!
+            </p>
+        </div>
+        <div>
+            <button onclick="openModal('create-poll-modal')" class="bg-white hover:bg-purple-50 text-purple-900 text-xs font-bold px-3.5 py-2 rounded shadow transition flex items-center gap-1.5">
+                <i class="fas fa-plus"></i> New Poll
+            </button>
+        </div>
+    </div>
+
+    <!-- Polls List -->
+    <div class="space-y-4">
+        {% for poll in polls %}
+        <div id="poll-card-{{ poll.id }}" class="retro-box rounded-md p-4 space-y-3 hover:border-purple-300 transition">
+            
+            <div class="flex items-center justify-between border-b pb-2">
+                <div class="flex items-center gap-2">
+                    <img src="{{ poll.creator_avatar }}" class="w-7 h-7 rounded-full object-cover">
+                    <span class="text-xs text-gray-700 font-medium">Started by <strong class="text-gray-900">{{ poll.creator_name }}</strong></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] uppercase font-bold bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                        {{ poll.category }}
+                    </span>
+                    <span class="text-xs text-gray-500 font-mono poll-total-votes">{{ poll.total_votes }} votes</span>
+                    
+                    <!-- Edit & Delete Poll -->
+                    <button onclick="openEditPollModal('{{ poll.id }}', '{{ poll.question|escape }}', '{{ poll.category }}')" class="text-gray-400 hover:text-blue-600 text-xs p-1" title="Edit Poll">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <button onclick="handleDeletePoll('{{ poll.id }}')" class="text-gray-400 hover:text-red-600 text-xs p-1" title="Delete Poll">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-sm text-gray-900 leading-snug poll-question-text">{{ poll.question }}</h3>
+
+            <div class="space-y-2">
+                {% for opt in poll.options_data %}
+                <div class="poll-opt-{{ opt.index }} relative bg-gray-50 rounded border border-gray-200 p-2.5 overflow-hidden">
+                    <div class="poll-progress-bar absolute left-0 top-0 bottom-0 bg-purple-200/70 transition-all duration-500" style="width: {{ opt.percentage }}%;"></div>
+                    
+                    <div class="relative z-10 flex items-center justify-between text-xs">
+                        <span class="font-medium text-gray-800">{{ opt.text }}</span>
+                        <div class="flex items-center gap-2.5">
+                            <span class="poll-pct-text text-gray-600 font-bold text-[11px]">{{ opt.percentage }}% ({{ opt.votes }})</span>
+                            <button onclick="submitVote('{{ poll.id }}', {{ opt.index }})" 
+                                class="poll-vote-btn px-3 py-1 rounded text-xs font-bold border transition {% if opt.index == poll.user_voted_idx %}bg-purple-600 text-white border-purple-700{% else %}bg-white text-gray-700 border-gray-300 hover:bg-gray-100{% endif %}">
+                                {% if opt.index == poll.user_voted_idx %}<i class="fas fa-check-circle mr-1"></i> Voted{% else %}Vote{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="text-[11px] text-gray-400 pt-1 flex items-center justify-between">
+                <span><i class="far fa-clock mr-1"></i> Posted on campus wire {{ poll.created_at[:10] }}</span>
+                <span class="text-purple-600 font-semibold">+2 Karma for voting</span>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Modal: Edit Poll -->
+<div id="edit-poll-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-lg w-full p-5 shadow-2xl border border-gray-300">
+        <div class="flex items-center justify-between border-b pb-3 mb-4">
+            <h3 class="font-bold text-sm text-gray-900">Edit Campus Poll</h3>
+            <button onclick="closeModal('edit-poll-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="edit-poll-form" onsubmit="handleSavePoll(event)" class="space-y-3 text-xs">
+            <input type="hidden" id="edit-poll-id" name="poll_id">
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Question</label>
+                <input type="text" id="edit-poll-question" name="question" required class="w-full p-2 border border-gray-300 rounded">
+            </div>
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Category</label>
+                <select id="edit-poll-category" name="category" class="w-full p-2 border border-gray-300 rounded">
+                    <option value="Food & Hangouts">Food & Hangouts</option>
+                    <option value="Campus Life">Campus Life</option>
+                    <option value="Academics">Academics</option>
+                    <option value="Fest Buzz">Fest Buzz</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="closeModal('edit-poll-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                <button type="submit" class="px-5 py-2 font-bold bg-purple-600 hover:bg-purple-700 text-white rounded">Update Poll</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

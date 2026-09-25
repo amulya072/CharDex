@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+campus.db
+debug_test.py
+run_tests.py
+update_name.py
+.git/

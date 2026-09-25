@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+
+{% block title %}The Wire - Campus Feed | The College Underground{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Instagram-style Campus Stories / Highlights Ribbon (Clickable!) -->
+    <div class="retro-box rounded-md p-3">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2 flex items-center justify-between">
+            <span>[ Campus Highlights & Stories ]</span>
+            <span class="text-[10px] text-blue-600 font-normal">Click to play stories</span>
+        </div>
+        <div class="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-none">
+            
+            <!-- You / Add Story -->
+            <div class="flex flex-col items-center flex-shrink-0 cursor-pointer group" onclick="openModal('create-post-modal')">
+                <div class="relative">
+                    <img src="{{ current_user.avatar }}" class="w-14 h-14 rounded-full object-cover border-2 border-dashed border-blue-500 p-0.5">
+                    <span class="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold shadow">+</span>
+                </div>
+                <span class="text-[11px] text-gray-700 mt-1 font-medium">Your Story</span>
+            </div>
+
+            <!-- Campus Highlight Circles (Clickable) -->
+            <div class="flex flex-col items-center flex-shrink-0 cursor-pointer group" onclick="playStory('Hackathon Live', 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=80', 'Amulya Patel', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80', 'SAC Auditorium packed for TechnoPulse 2026! 36 hours of coding begins.')">
+                <div class="story-ring">
+                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150&auto=format&fit=crop&q=80" class="w-13 h-13 story-avatar object-cover">
+                </div>
+                <span class="text-[11px] text-gray-700 mt-1 font-medium">Hackathon</span>
+            </div>
+
+            <div class="flex flex-col items-center flex-shrink-0 cursor-pointer group" onclick="playStory('Formula 26 Test Run', 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800&auto=format&fit=crop&q=80', 'Rohan Sharma', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80', 'First track run of our custom carbon-fiber chassis! Hit 100km/h in 3.4s.')">
+                <div class="story-ring">
+                    <img src="https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=150&auto=format&fit=crop&q=80" class="w-13 h-13 story-avatar object-cover">
+                </div>
+                <span class="text-[11px] text-gray-700 mt-1 font-medium">Formula '26</span>
+            </div>
+
+            <div class="flex flex-col items-center flex-shrink-0 cursor-pointer group" onclick="playStory('Quad Acoustic Sunset', 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&auto=format&fit=crop&q=80', 'Priya Nambiar', 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&auto=format&fit=crop&q=80', 'Golden hour jam session on the central lawn. 35mm film memories.')">
+                <div class="story-ring">
+                    <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=150&auto=format&fit=crop&q=80" class="w-13 h-13 story-avatar object-cover">
+                </div>
+                <span class="text-[11px] text-gray-700 mt-1 font-medium">Quad Sunsets</span>
+            </div>
+
+            <div class="flex flex-col items-center flex-shrink-0 cursor-pointer group" onclick="playStory('EE Lab Midnight', 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80', 'Maya Lin', 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80', 'Microcontroller soldering station running non-stop. Bringing donuts!')">
+                <div class="story-ring">
+                    <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=150&auto=format&fit=crop&q=80" class="w-13 h-13 story-avatar object-cover">
+                </div>
+                <span class="text-[11px] text-gray-700 mt-1 font-medium">EE Lab</span>
+            </div>
+
+            <div class="flex flex-col items-center flex-shrink-0 cursor-pointer group" onclick="playStory('Case Competition', 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=80', 'Chloe Bennett', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80', '1st place in the national case competition! Proud of our team.')">
+                <div class="story-ring">
+                    <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=150&auto=format&fit=crop&q=80" class="w-13 h-13 story-avatar object-cover">
+                </div>
+                <span class="text-[11px] text-gray-700 mt-1 font-medium">Consulting</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- What's on your mind? Post Composer -->
+    <div class="retro-box rounded-md p-4">
+        <div class="flex items-center gap-3">
+            <img src="{{ current_user.avatar }}" class="w-10 h-10 rounded-full object-cover border border-gray-300">
+            <button onclick="openModal('create-post-modal')" class="w-full text-left bg-gray-100 hover:bg-gray-200 text-gray-500 text-xs px-4 py-2.5 rounded-full transition border border-gray-200">
+                What's on your mind on campus, {{ current_user.name.split(' ')[0] }}?
+            </button>
+        </div>
+        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-600">
+            <button onclick="openModal('create-post-modal')" class="flex items-center gap-1.5 hover:text-blue-600 transition">
+                <i class="fas fa-image text-emerald-500"></i> Photo / Project
+            </button>
+            <button onclick="openModal('create-poll-modal')" class="flex items-center gap-1.5 hover:text-purple-600 transition">
+                <i class="fas fa-chart-bar text-purple-500"></i> Campus Poll
+            </button>
+            <a href="{{ url_for('directory') }}" class="flex items-center gap-1.5 hover:text-blue-600 transition">
+                <i class="fas fa-user-friends text-blue-500"></i> Find Classmates
+            </a>
+        </div>
+    </div>
+
+    <!-- Featured Live Poll Banner (if present) -->
+    {% if featured_poll %}
+    <div id="poll-card-{{ featured_poll.id }}" class="retro-box rounded-md p-4 bg-gradient-to-r from-purple-50/70 to-blue-50/70 border-l-4 border-l-purple-600">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] uppercase font-bold tracking-wider bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                Campus Pulse • {{ featured_poll.category }}
+            </span>
+            <span class="text-[11px] text-gray-500 poll-total-votes font-semibold">{{ featured_poll.total_votes }} votes</span>
+        </div>
+        <h3 class="font-bold text-sm text-gray-900 mb-3">{{ featured_poll.question }}</h3>
+        
+        <div class="space-y-2">
+            {% for opt in featured_poll.options_data %}
+            <div class="poll-opt-{{ opt.index }} relative bg-white/80 rounded border border-gray-200 p-2 overflow-hidden">
+                <div class="poll-progress-bar absolute left-0 top-0 bottom-0 bg-purple-200/60 transition-all duration-500" style="width: {{ opt.percentage }}%;"></div>
+                <div class="relative z-10 flex items-center justify-between text-xs">
+                    <span class="font-medium text-gray-800">{{ opt.text }}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="poll-pct-text text-gray-500 font-bold text-[11px]">{{ opt.percentage }}% ({{ opt.votes }})</span>
+                        <button onclick="submitVote('{{ featured_poll.id }}', {{ opt.index }})" 
+                            class="poll-vote-btn px-2.5 py-0.5 rounded text-[10px] font-bold border transition {% if opt.index == featured_poll.user_voted_idx %}bg-purple-600 text-white border-purple-700{% else %}bg-white text-gray-700 border-gray-300 hover:bg-gray-100{% endif %}">
+                            {% if opt.index == featured_poll.user_voted_idx %}Voted{% else %}Vote{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Stream of Campus Posts -->
+    <div class="space-y-5">
+        {% for post in posts %}
+        <article class="retro-box rounded-md overflow-hidden" id="post-card-{{ post.id }}">
+            
+            <!-- Post Header with Edit/Delete options -->
+            <div class="p-3.5 flex items-center justify-between border-b border-gray-100">
+                <a href="{{ url_for('profile', student_id=post.student_id) }}" class="flex items-center gap-2.5 group">
+                    <img src="{{ post.author_avatar }}" class="w-9 h-9 rounded-full object-cover border border-gray-200">
+                    <div>
+                        <div class="font-bold text-xs text-gray-900 group-hover:text-blue-700 transition flex items-center gap-1.5">
+                            {{ post.author_name }}
+                            <span class="text-[10px] font-normal text-gray-400">@{{ post.author_handle }}</span>
+                        </div>
+                        <div class="text-[11px] text-gray-500">{{ post.author_dept }} • Class of {{ post.author_batch }}</div>
+                    </div>
+                </a>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="pokeStudent('{{ post.student_id }}', '{{ post.author_name }}', this)" class="poke-btn text-gray-400 hover:text-blue-600 text-xs px-2 py-1 rounded hover:bg-blue-50 transition" title="Poke student">
+                        👉 <span class="hidden sm:inline text-[11px]">Poke</span>
+                    </button>
+                    <!-- Edit & Delete Post -->
+                    <button onclick="openEditPostModal('{{ post.id }}', '{{ post.content|escape }}', '{{ post.image_url or '' }}', '{{ post.tags or '' }}')" class="text-gray-400 hover:text-blue-600 text-xs p-1" title="Edit Post">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <button onclick="handleDeletePost('{{ post.id }}')" class="text-gray-400 hover:text-red-600 text-xs p-1" title="Delete Post">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Post Content -->
+            <div class="p-4 text-xs text-gray-800 leading-relaxed space-y-2">
+                <p class="post-content-text">{{ post.content }}</p>
+                {% if post.tags %}
+                <div class="text-blue-600 font-semibold text-[11px]">{{ post.tags }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Optional Image (Click to Lightbox) -->
+            {% if post.image_url %}
+            <div class="bg-gray-100 border-t border-b border-gray-100 max-h-96 overflow-hidden">
+                <img src="{{ post.image_url }}" alt="Post media" 
+                    onclick="openPhotoLightbox('{{ post.id }}', '{{ post.image_url }}', '{{ post.content|escape }}', '{{ post.likes_count }}', '{{ post.author_name }}', '{{ post.author_avatar }}', '{{ post.author_handle }}')"
+                    class="w-full object-cover hover:scale-101 transition duration-300 cursor-pointer">
+            </div>
+            {% endif %}
+
+            <!-- Post Actions & Likes -->
+            <div class="px-4 py-2.5 bg-gray-50/70 border-t border-gray-100 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-4">
+                    <button onclick="togglePostLike('{{ post.id }}', this)" class="flex items-center text-gray-700 font-medium hover:text-red-600 transition">
+                        {% if post.is_liked %}
+                        <i class="fas fa-heart text-red-500 mr-1.5"></i>
+                        {% else %}
+                        <i class="far fa-heart text-gray-500 mr-1.5"></i>
+                        {% endif %}
+                        <span id="post-likes-count-{{ post.id }}" class="font-bold">{{ post.likes_count }}</span>
+                    </button>
+
+                    <span class="flex items-center text-gray-500">
+                        <i class="far fa-comment mr-1.5"></i>
+                        <span id="post-comments-count-{{ post.id }}">{{ post.comments|length }} comments</span>
+                    </span>
+                </div>
+
+                <div class="text-[11px] text-gray-400">
+                    <i class="far fa-clock mr-1"></i> {{ post.created_at[:16] }}
+                </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="p-3.5 bg-white border-t border-gray-100 space-y-2">
+                <div id="post-comments-list-{{ post.id }}" class="space-y-2 max-h-48 overflow-y-auto">
+                    {% for c in post.comments %}
+                    <div id="comment-item-{{ c.id }}" class="flex items-start justify-between gap-2 text-xs group">
+                        <div class="flex items-start gap-2">
+                            <img src="{{ c.author_avatar }}" class="w-6 h-6 rounded-full object-cover mt-0.5">
+                            <div class="bg-gray-100 rounded-lg px-3 py-1.5 flex-1">
+                                <a href="{{ url_for('profile', student_id=c.student_id) }}" class="font-bold text-gray-900 hover:underline">{{ c.author_name }}</a>
+                                <p class="text-gray-700 mt-0.5">{{ c.content }}</p>
+                            </div>
+                        </div>
+                        <button onclick="handleDeleteComment('{{ c.id }}')" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-[10px] p-1" title="Delete comment">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Add Comment Form -->
+                <form onsubmit="event.preventDefault(); addComment('{{ post.id }}', this);" class="flex items-center gap-2 pt-2 border-t border-gray-100">
+                    <img src="{{ current_user.avatar }}" class="w-6 h-6 rounded-full object-cover">
+                    <input type="text" name="content" placeholder="Write a comment on the wire..." required 
+                        class="flex-1 bg-gray-100 text-xs rounded-full px-3.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 border border-gray-200">
+                    <button type="submit" class="text-blue-600 hover:text-blue-800 text-xs font-bold px-2 py-1">Post</button>
+                </form>
+            </div>
+
+        </article>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Modal: Interactive Instagram Story Player -->
+<div id="story-player-modal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md z-50 items-center justify-center p-4">
+    <div class="relative max-w-sm w-full bg-slate-900 rounded-xl overflow-hidden shadow-2xl flex flex-col h-[520px]">
+        <!-- Top Story Progress Bar -->
+        <div class="p-3 bg-gradient-to-b from-black/80 to-transparent absolute top-0 left-0 right-0 z-20 space-y-2">
+            <div class="w-full bg-white/30 h-1 rounded-full overflow-hidden">
+                <div id="story-progress-bar" class="bg-white h-full transition-all duration-100" style="width: 0%;"></div>
+            </div>
+            <div class="flex items-center justify-between text-white">
+                <div class="flex items-center gap-2">
+                    <img id="story-author-avatar" src="" class="w-7 h-7 rounded-full object-cover border border-white">
+                    <div>
+                        <div id="story-author-name" class="font-bold text-xs"></div>
+                        <div id="story-title" class="text-[10px] text-gray-300"></div>
+                    </div>
+                </div>
+                <button onclick="closeStoryPlayer()" class="text-white hover:text-gray-300 text-base">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Story Image -->
+        <div class="flex-1 flex items-center justify-center bg-black overflow-hidden">
+            <img id="story-image" src="" class="w-full h-full object-cover">
+        </div>
+
+        <!-- Story Bottom Caption -->
+        <div class="p-3 bg-gradient-to-t from-black/90 to-transparent absolute bottom-0 left-0 right-0 z-20 text-white text-xs">
+            <p id="story-caption" class="leading-relaxed"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Post -->
+<div id="edit-post-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-lg w-full p-5 shadow-2xl border border-gray-300">
+        <div class="flex items-center justify-between border-b pb-3 mb-4">
+            <h3 class="font-bold text-sm text-gray-900">Edit Campus Wire Post</h3>
+            <button onclick="closeModal('edit-post-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="edit-post-form" onsubmit="handleSavePost(event)" class="space-y-3 text-xs">
+            <input type="hidden" id="edit-post-id" name="post_id">
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Content</label>
+                <textarea id="edit-post-content" name="content" rows="4" required class="w-full p-2 border border-gray-300 rounded"></textarea>
+            </div>
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Image URL</label>
+                <input type="url" id="edit-post-image" name="image_url" class="w-full p-2 border border-gray-300 rounded">
+            </div>
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Tags</label>
+                <input type="text" id="edit-post-tags" name="tags" class="w-full p-2 border border-gray-300 rounded">
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="closeModal('edit-post-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                <button type="submit" class="px-5 py-2 font-bold bg-blue-600 hover:bg-blue-700 text-white rounded">Update Post</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Instagram Photo Lightbox -->
+<div id="photo-lightbox-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-50 items-center justify-center p-2 sm:p-6">
+    <div class="bg-white rounded-lg max-w-4xl w-full overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[85vh]">
+        <div class="md:w-3/5 bg-black flex items-center justify-center relative">
+            <img id="lightbox-img" src="" class="max-h-[500px] w-auto object-contain">
+        </div>
+        <div class="md:w-2/5 p-4 flex flex-col justify-between bg-white">
+            <div>
+                <div class="flex items-center justify-between border-b pb-3 mb-3">
+                    <div class="flex items-center gap-2">
+                        <img id="lightbox-avatar" src="" class="w-8 h-8 rounded-full object-cover">
+                        <div>
+                            <div id="lightbox-author" class="font-bold text-xs text-gray-900"></div>
+                            <div id="lightbox-handle" class="text-[10px] text-gray-400"></div>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('photo-lightbox-modal')" class="text-gray-400 hover:text-gray-600 text-lg">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <p id="lightbox-caption" class="text-xs text-gray-700 leading-relaxed mb-4"></p>
+            </div>
+            
+            <div class="border-t pt-3 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                    <span id="lightbox-likes" class="font-bold text-gray-900"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

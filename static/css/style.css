@@ -1,0 +1,277 @@
+/* Retro TheFacebook (2004) meets Modern Collegiate Instagram */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+    --fb-navy: #1b3a6b;
+    --fb-blue: #3b5998;
+    --fb-light-blue: #6d84b4;
+    --fb-border: #d8dfea;
+    --fb-bg: #f4f6f9;
+    --fb-card: #ffffff;
+    --text-main: #1f2937;
+    --text-muted: #64748b;
+    --insta-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+[data-theme="dark"] {
+    --fb-navy: #091326;
+    --fb-blue: #1e3a8a;
+    --fb-light-blue: #3b82f6;
+    --fb-border: #334155;
+    --fb-bg: #0b0f19;
+    --fb-card: #151d30;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--fb-bg);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Classic Ivy League / TheFacebook Brand Header */
+.brand-font {
+    font-family: 'Merriweather', serif;
+    letter-spacing: -0.5px;
+}
+
+.ivy-seal-text {
+    font-family: 'Cinzel', Georgia, serif;
+    letter-spacing: 1px;
+}
+
+/* 2004 Style Accent Borders */
+.retro-box {
+    background: var(--fb-card);
+    border: 1px solid var(--fb-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="dark"] .retro-box {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.retro-header-bar {
+    background: linear-gradient(180deg, #3b5998 0%, #2b4780 100%);
+    border-bottom: 2px solid #1c325c;
+}
+
+[data-theme="dark"] .retro-header-bar {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border-bottom: 2px solid #020617;
+}
+
+.retro-sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #3b5998;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+[data-theme="dark"] .retro-sidebar-link {
+    color: #93c5fd;
+}
+
+.retro-sidebar-link:hover {
+    background-color: #eceff5;
+    color: #1b3a6b;
+}
+
+[data-theme="dark"] .retro-sidebar-link:hover {
+    background-color: #1e293b;
+    color: #ffffff;
+}
+
+.retro-sidebar-link.active {
+    background-color: #3b5998;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .retro-sidebar-link.active {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+/* Instagram Story Circles */
+.story-ring {
+    padding: 2.5px;
+    background: var(--insta-gradient);
+    border-radius: 9999px;
+    display: inline-flex;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.story-ring:hover {
+    transform: scale(1.08);
+}
+
+.story-avatar {
+    border: 2px solid #ffffff;
+    border-radius: 9999px;
+}
+
+/* Instagram Profile Photo Grid */
+.insta-grid-item {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    background-color: #1f2937;
+}
+
+.insta-grid-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.insta-grid-item:hover .insta-grid-overlay {
+    opacity: 1;
+}
+
+/* TheFacebook Profile Information Table */
+.thefacebook-info-table th {
+    width: 32%;
+    text-align: right;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #556677;
+    font-weight: 600;
+    border-bottom: 1px solid #f0f2f5;
+    background-color: #fafbfc;
+}
+
+[data-theme="dark"] .thefacebook-info-table th {
+    color: #94a3b8;
+    background-color: #1a233a;
+    border-bottom: 1px solid #334155;
+}
+
+.thefacebook-info-table td {
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #1e293b;
+    border-bottom: 1px solid #f0f2f5;
+}
+
+[data-theme="dark"] .thefacebook-info-table td {
+    color: #e2e8f0;
+    border-bottom: 1px solid #334155;
+}
+
+/* Poke Button Animation */
+@keyframes pokeWiggle {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-15deg) scale(1.15); }
+    50% { transform: rotate(15deg) scale(1.2); }
+    75% { transform: rotate(-10deg) scale(1.1); }
+    100% { transform: rotate(0deg) scale(1); }
+}
+
+.poke-btn:active i, .poke-btn.animating i {
+    display: inline-block;
+    animation: pokeWiggle 0.4s ease-in-out;
+}
+
+/* Toast Notification */
+#toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.toast {
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #1e293b;
+    color: #ffffff;
+    border-left: 4px solid #3b82f6;
+    padding: 12px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Podium Glow */
+.podium-gold {
+    background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+    border: 2px solid #f59e0b;
+}
+.podium-silver {
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 2px solid #94a3b8;
+}
+.podium-bronze {
+    background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+    border: 2px solid #d97706;
+}
+
+[data-theme="dark"] .podium-gold {
+    background: linear-gradient(180deg, #451a03 0%, #78350f 100%);
+    border: 2px solid #f59e0b;
+    color: #fef3c7;
+}
+[data-theme="dark"] .podium-silver {
+    background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+    border: 2px solid #94a3b8;
+    color: #f8fafc;
+}
+[data-theme="dark"] .podium-bronze {
+    background: linear-gradient(180deg, #3f1d0b 0%, #7c2d12 100%);
+    border: 2px solid #d97706;
+    color: #ffedd5;
+}

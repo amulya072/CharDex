@@ -1,0 +1,608 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.name }} (@{{ student.handle }}) | The College Underground{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Profile Header (Instagram Profile Meets TheFacebook Cover) -->
+    <div class="retro-box rounded-md overflow-hidden bg-white">
+        
+        <!-- Banner Image -->
+        <div class="h-36 sm:h-48 bg-cover bg-center relative" style="background-image: url('{{ student.banner }}');">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+            <div class="absolute top-3 right-3 flex items-center gap-2">
+                <span class="bg-black/60 backdrop-blur-sm text-white text-xs font-mono px-2.5 py-1 rounded">
+                    Roll No: {{ student.roll_no }}
+                </span>
+                <!-- Edit Profile Button -->
+                <button onclick="openModal('edit-student-modal')" class="bg-white/90 hover:bg-white text-gray-800 text-xs font-bold px-2.5 py-1 rounded shadow transition flex items-center gap-1">
+                    <i class="fas fa-edit text-blue-600"></i> Edit Profile
+                </button>
+            </div>
+        </div>
+
+        <!-- Profile Top Section -->
+        <div class="px-5 pb-5">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between -mt-14 sm:-mt-16 mb-4 gap-4">
+                
+                <!-- Avatar & Badges -->
+                <div class="flex items-end gap-4">
+                    <div class="relative cursor-pointer" onclick="openModal('edit-student-modal')" title="Click to edit profile">
+                        <img src="{{ student.avatar }}" alt="{{ student.name }}" 
+                            class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-white shadow-lg">
+                        <span class="absolute bottom-1 right-1 bg-emerald-500 w-4 h-4 rounded-full border-2 border-white" title="Active on Campus"></span>
+                    </div>
+
+                    <div class="mb-1">
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">{{ student.name }}</h1>
+                            <i class="fas fa-check-circle text-blue-500 text-sm" title="Verified Campus Student"></i>
+                        </div>
+                        <div class="text-xs text-gray-500 font-medium">@{{ student.handle }} • {{ student.department }}</div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap items-center gap-2">
+                    {% if not relationship.is_self %}
+                        
+                        <!-- Direct Message Button -->
+                        <a href="{{ url_for('messages_view', target_id=student.id) }}" 
+                            class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded transition shadow-sm flex items-center gap-1.5">
+                            <i class="fas fa-paper-plane"></i> Message
+                        </a>
+
+                        <!-- Follow / Unfollow Button -->
+                        <button onclick="handleFollowAction('{{ student.id }}', this)" 
+                            class="px-3.5 py-1.5 {% if relationship.is_following %}bg-gray-200 hover:bg-gray-300 text-gray-800 border border-gray-300{% else %}bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300{% endif %} text-xs font-bold rounded transition">
+                            {% if relationship.is_following %}
+                            <i class="fas fa-check mr-1"></i> Following
+                            {% else %}
+                            <i class="fas fa-plus mr-1"></i> Follow
+                            {% endif %}
+                        </button>
+
+                        <!-- Friend Request Button -->
+                        {% if relationship.friend_status == 'friends' %}
+                        <button onclick="handleFriendAction('{{ student.id }}', 'remove', this)" class="px-3 py-1.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded border border-emerald-300 hover:bg-emerald-200 transition">
+                            <i class="fas fa-user-check mr-1"></i> Friends
+                        </button>
+                        {% elif relationship.friend_status == 'requested' %}
+                        <button onclick="handleFriendAction('{{ student.id }}', 'remove', this)" class="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-semibold rounded border border-gray-300">
+                            <i class="fas fa-clock mr-1"></i> Requested
+                        </button>
+                        {% elif relationship.friend_status == 'received_request' %}
+                        <button onclick="handleFriendAction('{{ student.id }}', 'accept', this)" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded transition shadow-sm">
+                            <i class="fas fa-user-plus mr-1"></i> Accept Request
+                        </button>
+                        {% else %}
+                        <button onclick="handleFriendAction('{{ student.id }}', 'send', this)" class="px-3 py-1.5 bg-[#3b5998] hover:bg-[#2b4780] text-white text-xs font-semibold rounded transition">
+                            <i class="fas fa-user-plus mr-1"></i> Add Friend
+                        </button>
+                        {% endif %}
+
+                        <!-- Classic TheFacebook Poke Button -->
+                        <button onclick="pokeStudent('{{ student.id }}', '{{ student.name }}', this)" class="poke-btn px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold rounded transition flex items-center gap-1.5">
+                            👉 <span>Poke</span>
+                        </button>
+
+                    {% else %}
+                        <button onclick="openModal('edit-student-modal')" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded transition shadow-sm flex items-center gap-1.5">
+                            <i class="fas fa-user-edit"></i> Edit Your Details
+                        </button>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Instagram-Style Stats Row -->
+            <div class="flex items-center justify-around sm:justify-start sm:gap-8 py-3 border-y border-gray-200 text-xs my-3">
+                <div class="text-center sm:text-left">
+                    <span class="font-bold text-gray-900 text-sm block sm:inline">{{ student.posts_count }}</span>
+                    <span class="text-gray-500">posts</span>
+                </div>
+
+                <div class="text-center sm:text-left cursor-pointer hover:text-blue-600 transition" onclick="openModal('followers-modal')">
+                    <span id="followers-count-{{ student.id }}" class="font-bold text-gray-900 text-sm block sm:inline">{{ student.followers_count }}</span>
+                    <span class="text-gray-500">followers</span>
+                </div>
+
+                <div class="text-center sm:text-left cursor-pointer hover:text-blue-600 transition" onclick="openModal('following-modal')">
+                    <span class="font-bold text-gray-900 text-sm block sm:inline">{{ student.following_count }}</span>
+                    <span class="text-gray-500">following</span>
+                </div>
+
+                <div class="text-center sm:text-left cursor-pointer hover:text-blue-600 transition" onclick="openModal('friends-modal')">
+                    <span class="font-bold text-gray-900 text-sm block sm:inline">{{ student.friends_count }}</span>
+                    <span class="text-gray-500">friends</span>
+                </div>
+
+                <div class="text-center sm:text-left">
+                    <span class="font-bold text-blue-700 text-sm block sm:inline">{{ student.karma }}</span>
+                    <span class="text-gray-500">karma</span>
+                </div>
+            </div>
+
+            <!-- Bio & Quotes Section -->
+            <div class="text-xs text-gray-800 space-y-1.5 pt-1">
+                <p class="font-medium leading-relaxed">{{ student.bio }}</p>
+                <p class="italic text-gray-500">"{{ student.quote }}"</p>
+                
+                <!-- Social Handles -->
+                <div class="flex items-center gap-3 pt-2 text-[11px] text-blue-600 font-semibold">
+                    {% if student.socials.github %}
+                    <a href="https://{{ student.socials.github }}" target="_blank" class="hover:underline"><i class="fab fa-github mr-1 text-gray-800"></i> {{ student.socials.github }}</a>
+                    {% endif %}
+                    {% if student.socials.instagram %}
+                    <a href="#" class="hover:underline"><i class="fab fa-instagram mr-1 text-pink-600"></i> {{ student.socials.instagram }}</a>
+                    {% endif %}
+                </div>
+
+                <!-- Mutual Friends Counter -->
+                {% if not relationship.is_self and relationship.mutual_friends_count > 0 %}
+                <div class="flex items-center gap-2 pt-2 text-[11px] text-gray-500">
+                    <div class="flex -space-x-2">
+                        {% for mf in relationship.mutual_friends_preview %}
+                        <img src="{{ mf.avatar }}" class="w-5 h-5 rounded-full object-cover border border-white">
+                        {% endfor %}
+                    </div>
+                    <span>{{ relationship.mutual_friends_count }} mutual friends with you</span>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    <!-- The 2004 TheFacebook "Information" Box (Fully Editable) -->
+    <div class="retro-box rounded-md overflow-hidden">
+        <div class="bg-gradient-to-r from-[#3b5998] to-[#203a6d] px-4 py-2 text-white flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider font-serif">[ Information ]</span>
+            <button onclick="openModal('edit-student-modal')" class="text-[11px] text-blue-200 hover:text-white flex items-center gap-1">
+                <i class="fas fa-pencil-alt text-[10px]"></i> Edit Details
+            </button>
+        </div>
+        
+        <table class="w-full thefacebook-info-table">
+            <tbody>
+                <tr>
+                    <th>Residential Hall / Dorm</th>
+                    <td><i class="fas fa-door-closed text-gray-400 mr-1.5"></i> {{ student.dorm }}</td>
+                </tr>
+                <tr>
+                    <th>Academic Class</th>
+                    <td>{{ student.batch_title }} (Class of '{{ student.batch_year }}')</td>
+                </tr>
+                <tr>
+                    <th>Major & Department</th>
+                    <td><strong>{{ student.department }}</strong></td>
+                </tr>
+                <tr>
+                    <th>Cumulative GPA</th>
+                    <td><span class="font-bold text-blue-700">{{ student.gpa }}</span> / 4.00</td>
+                </tr>
+                <tr>
+                    <th>Hometown</th>
+                    <td><i class="fas fa-map-pin text-gray-400 mr-1.5"></i> {{ student.hometown }}</td>
+                </tr>
+                <tr>
+                    <th>Relationship Status</th>
+                    <td><span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded border border-pink-200 font-medium text-[11px]">{{ student.relationship_status }}</span></td>
+                </tr>
+                <tr>
+                    <th>Canteen Addiction</th>
+                    <td>🍔 {{ student.canteen_fav }}</td>
+                </tr>
+                <tr>
+                    <th>Badges & Honors</th>
+                    <td>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for b in student.badges %}
+                            <span class="px-2 py-0.5 bg-blue-50 text-blue-800 text-[11px] font-bold rounded border border-blue-200">
+                                ⭐ {{ b }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Profile Tabs: Photo Grid vs The Wall vs Friends -->
+    <div class="space-y-4">
+        
+        <div class="flex border-b border-gray-200 text-xs font-bold">
+            <button onclick="switchProfileTab('grid')" id="tab-btn-grid" class="flex items-center gap-1.5 px-4 py-2.5 border-b-2 border-blue-600 text-blue-600 transition">
+                <i class="fas fa-th"></i> Photo Grid
+            </button>
+            <button onclick="switchProfileTab('wall')" id="tab-btn-wall" class="flex items-center gap-1.5 px-4 py-2.5 border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition">
+                <i class="fas fa-stream"></i> The Wall ({{ posts|length }})
+            </button>
+            <button onclick="switchProfileTab('friends')" id="tab-btn-friends" class="flex items-center gap-1.5 px-4 py-2.5 border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition">
+                <i class="fas fa-user-friends"></i> Friends ({{ friends|length }})
+            </button>
+        </div>
+
+        <!-- TAB 1: Instagram-style 3x3 Photo Grid (Click opens Lightbox) -->
+        <div id="profile-tab-grid" class="grid grid-cols-3 gap-2 sm:gap-3">
+            {% for p in posts %}
+                {% if p.image_url %}
+                <div class="insta-grid-item rounded cursor-pointer group" onclick="openPhotoLightbox('{{ p.id }}', '{{ p.image_url }}', '{{ p.content|escape }}', '{{ p.likes_count }}', '{{ student.name }}', '{{ student.avatar }}', '{{ student.handle }}')">
+                    <img src="{{ p.image_url }}" alt="Post image" class="w-full h-full object-cover">
+                    <div class="insta-grid-overlay">
+                        <span class="flex items-center gap-1 text-xs"><i class="fas fa-heart"></i> {{ p.likes_count }}</span>
+                        <span class="flex items-center gap-1 text-xs"><i class="fas fa-comment"></i> {{ p.comments|length }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="col-span-3 text-center py-8 text-xs text-gray-400">
+                    <i class="fas fa-camera text-2xl mb-1 text-gray-300"></i>
+                    <p>No photos posted yet.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- TAB 2: The Wall / Posts List -->
+        <div id="profile-tab-wall" class="hidden space-y-4">
+            {% for post in posts %}
+            <article class="retro-box rounded-md overflow-hidden" id="post-card-{{ post.id }}">
+                <div class="p-3.5 flex items-center justify-between border-b border-gray-100">
+                    <div class="flex items-center gap-2.5">
+                        <img src="{{ student.avatar }}" class="w-8 h-8 rounded-full object-cover">
+                        <div>
+                            <div class="font-bold text-xs text-gray-900">{{ student.name }}</div>
+                            <div class="text-[10px] text-gray-400">{{ post.created_at[:16] }}</div>
+                        </div>
+                    </div>
+                    <!-- Edit & Delete Post -->
+                    <div class="flex items-center gap-2">
+                        <button onclick="openEditPostModal('{{ post.id }}', '{{ post.content|escape }}', '{{ post.image_url or '' }}', '{{ post.tags or '' }}')" class="text-gray-400 hover:text-blue-600 text-xs" title="Edit Post">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button onclick="handleDeletePost('{{ post.id }}')" class="text-gray-400 hover:text-red-600 text-xs" title="Delete Post">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4 text-xs text-gray-800 space-y-2">
+                    <p class="post-content-text">{{ post.content }}</p>
+                    {% if post.tags %}<div class="text-blue-600 font-semibold text-[11px]">{{ post.tags }}</div>{% endif %}
+                </div>
+                {% if post.image_url %}
+                <img src="{{ post.image_url }}" class="w-full max-h-80 object-cover cursor-pointer" onclick="openPhotoLightbox('{{ post.id }}', '{{ post.image_url }}', '{{ post.content|escape }}', '{{ post.likes_count }}', '{{ student.name }}', '{{ student.avatar }}', '{{ student.handle }}')">
+                {% endif %}
+                <div class="px-4 py-2 bg-gray-50 border-t flex items-center justify-between text-xs text-gray-600">
+                    <button onclick="togglePostLike('{{ post.id }}', this)" class="font-bold hover:text-red-500">
+                        <i class="{% if post.is_liked %}fas fa-heart text-red-500{% else %}far fa-heart{% endif %} mr-1"></i> <span id="post-likes-count-{{ post.id }}">{{ post.likes_count }}</span> Likes
+                    </button>
+                    <span>{{ post.comments|length }} comments</span>
+                </div>
+            </article>
+            {% else %}
+            <div class="retro-box rounded-md p-6 text-center text-xs text-gray-400">
+                The wall is quiet. No posts made yet.
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- TAB 3: Friends Matrix -->
+        <div id="profile-tab-friends" class="hidden grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {% for f in friends %}
+            <div class="retro-box rounded p-3 flex items-center gap-3">
+                <a href="{{ url_for('profile', student_id=f.id) }}">
+                    <img src="{{ f.avatar }}" class="w-10 h-10 rounded-full object-cover border border-gray-300 hover:scale-105 transition">
+                </a>
+                <div class="truncate flex-1">
+                    <a href="{{ url_for('profile', student_id=f.id) }}" class="font-bold text-xs text-gray-900 hover:text-blue-600 truncate block">
+                        {{ f.name }}
+                    </a>
+                    <div class="text-[10px] text-gray-500 truncate">{{ f.department }}</div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <button onclick="pokeStudent('{{ f.id }}', '{{ f.name }}', this)" class="text-[10px] text-amber-700 hover:underline">
+                            👉 Poke
+                        </button>
+                        <a href="{{ url_for('messages_view', target_id=f.id) }}" class="text-[10px] text-blue-600 hover:underline">
+                            💬 DM
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-span-3 text-center py-6 text-xs text-gray-400">
+                No friends added yet. Connect with classmates!
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Comprehensive Modal: Edit Student Profile (Everything is Editable) -->
+<div id="edit-student-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-xl w-full p-5 shadow-2xl border border-gray-300 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b pb-3 mb-4">
+            <div class="font-bold text-sm text-gray-900 flex items-center gap-2">
+                <i class="fas fa-user-edit text-blue-600 text-lg"></i> Edit Student Profile
+            </div>
+            <button onclick="closeModal('edit-student-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <form onsubmit="handleSaveStudent(event, '{{ student.id }}', this)" class="space-y-3 text-xs">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Full Name</label>
+                    <input type="text" name="name" value="{{ student.name }}" required class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Handle (@)</label>
+                    <input type="text" name="handle" value="{{ student.handle }}" required class="w-full p-2 border border-gray-300 rounded">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Roll Number</label>
+                    <input type="text" name="roll_no" value="{{ student.roll_no }}" required class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Department</label>
+                    <select name="department" class="w-full p-2 border border-gray-300 rounded">
+                        {% for d in ['Computer Science', 'Mechanical Engineering', 'Electrical Engineering', 'Business Administration', 'Biotechnology', 'Design & Arts'] %}
+                        <option value="{{ d }}" {% if student.department == d %}selected{% endif %}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Academic Class</label>
+                    <select name="batch_title" class="w-full p-2 border border-gray-300 rounded">
+                        {% for b in ['Freshman', 'Sophomore', 'Junior', 'Senior'] %}
+                        <option value="{{ b }}" {% if student.batch_title == b %}selected{% endif %}>{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Graduation Year</label>
+                    <input type="number" name="batch_year" value="{{ student.batch_year }}" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Cumulative GPA</label>
+                    <input type="number" step="0.01" name="gpa" value="{{ student.gpa }}" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Campus Karma Points</label>
+                    <input type="number" name="karma" value="{{ student.karma }}" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Projects Count</label>
+                    <input type="number" name="projects_count" value="{{ student.projects_count }}" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Residential Hall / Dorm</label>
+                    <input type="text" name="dorm" value="{{ student.dorm }}" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Hometown</label>
+                    <input type="text" name="hometown" value="{{ student.hometown }}" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Relationship Status</label>
+                    <input type="text" name="relationship_status" value="{{ student.relationship_status }}" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Canteen Favorite</label>
+                    <input type="text" name="canteen_fav" value="{{ student.canteen_fav }}" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Campus Quote</label>
+                <input type="text" name="quote" value="{{ student.quote }}" class="w-full p-2 border border-gray-300 rounded">
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Bio</label>
+                <textarea name="bio" rows="2" class="w-full p-2 border border-gray-300 rounded">{{ student.bio }}</textarea>
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Badges (comma separated)</label>
+                <input type="text" name="badges" value="{{ student.badges|join(', ') }}" class="w-full p-2 border border-gray-300 rounded">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Avatar Image URL</label>
+                    <input type="url" name="avatar" value="{{ student.avatar }}" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Banner Image URL</label>
+                    <input type="url" name="banner" value="{{ student.banner }}" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-3 border-t">
+                <button type="button" onclick="handleDeleteStudent('{{ student.id }}')" class="text-red-600 hover:text-red-800 font-bold text-xs">
+                    <i class="fas fa-trash-alt mr-1"></i> Delete Student
+                </button>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeModal('edit-student-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                    <button type="submit" class="px-5 py-2 font-bold bg-blue-600 hover:bg-blue-700 text-white rounded">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Instagram Photo Lightbox -->
+<div id="photo-lightbox-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-50 items-center justify-center p-2 sm:p-6">
+    <div class="bg-white rounded-lg max-w-4xl w-full overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[85vh]">
+        <!-- Lightbox Image (Left) -->
+        <div class="md:w-3/5 bg-black flex items-center justify-center relative">
+            <img id="lightbox-img" src="" class="max-h-[500px] w-auto object-contain">
+        </div>
+        <!-- Lightbox Details & Comments (Right) -->
+        <div class="md:w-2/5 p-4 flex flex-col justify-between bg-white">
+            <div>
+                <div class="flex items-center justify-between border-b pb-3 mb-3">
+                    <div class="flex items-center gap-2">
+                        <img id="lightbox-avatar" src="" class="w-8 h-8 rounded-full object-cover">
+                        <div>
+                            <div id="lightbox-author" class="font-bold text-xs text-gray-900"></div>
+                            <div id="lightbox-handle" class="text-[10px] text-gray-400"></div>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('photo-lightbox-modal')" class="text-gray-400 hover:text-gray-600 text-lg">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <p id="lightbox-caption" class="text-xs text-gray-700 leading-relaxed mb-4"></p>
+            </div>
+            
+            <div class="border-t pt-3 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                    <span id="lightbox-likes" class="font-bold text-gray-900"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Post -->
+<div id="edit-post-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-lg w-full p-5 shadow-2xl border border-gray-300">
+        <div class="flex items-center justify-between border-b pb-3 mb-4">
+            <h3 class="font-bold text-sm text-gray-900">Edit Campus Wire Post</h3>
+            <button onclick="closeModal('edit-post-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="edit-post-form" onsubmit="handleSavePost(event)" class="space-y-3 text-xs">
+            <input type="hidden" id="edit-post-id" name="post_id">
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Content</label>
+                <textarea id="edit-post-content" name="content" rows="4" required class="w-full p-2 border border-gray-300 rounded"></textarea>
+            </div>
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Image URL</label>
+                <input type="url" id="edit-post-image" name="image_url" class="w-full p-2 border border-gray-300 rounded">
+            </div>
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Tags</label>
+                <input type="text" id="edit-post-tags" name="tags" class="w-full p-2 border border-gray-300 rounded">
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="closeModal('edit-post-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                <button type="submit" class="px-5 py-2 font-bold bg-blue-600 hover:bg-blue-700 text-white rounded">Update Post</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Followers List -->
+<div id="followers-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-sm w-full p-4 shadow-2xl border border-gray-200">
+        <div class="flex items-center justify-between border-b pb-2 mb-3">
+            <h3 class="font-bold text-xs text-gray-900">Followers ({{ followers|length }})</h3>
+            <button onclick="closeModal('followers-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="space-y-2 max-h-72 overflow-y-auto">
+            {% for fl in followers %}
+            <div class="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-b-0">
+                <a href="{{ url_for('profile', student_id=fl.id) }}" class="flex items-center gap-2">
+                    <img src="{{ fl.avatar }}" class="w-8 h-8 rounded-full object-cover">
+                    <div>
+                        <div class="font-bold text-xs text-gray-900">{{ fl.name }}</div>
+                        <div class="text-[10px] text-gray-500">{{ fl.department }}</div>
+                    </div>
+                </a>
+            </div>
+            {% else %}
+            <p class="text-xs text-gray-400 text-center py-4">No followers yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Following List -->
+<div id="following-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-sm w-full p-4 shadow-2xl border border-gray-200">
+        <div class="flex items-center justify-between border-b pb-2 mb-3">
+            <h3 class="font-bold text-xs text-gray-900">Following ({{ following|length }})</h3>
+            <button onclick="closeModal('following-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="space-y-2 max-h-72 overflow-y-auto">
+            {% for fl in following %}
+            <div class="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-b-0">
+                <a href="{{ url_for('profile', student_id=fl.id) }}" class="flex items-center gap-2">
+                    <img src="{{ fl.avatar }}" class="w-8 h-8 rounded-full object-cover">
+                    <div>
+                        <div class="font-bold text-xs text-gray-900">{{ fl.name }}</div>
+                        <div class="text-[10px] text-gray-500">{{ fl.department }}</div>
+                    </div>
+                </a>
+            </div>
+            {% else %}
+            <p class="text-xs text-gray-400 text-center py-4">Not following anyone yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Friends List -->
+<div id="friends-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-sm w-full p-4 shadow-2xl border border-gray-200">
+        <div class="flex items-center justify-between border-b pb-2 mb-3">
+            <h3 class="font-bold text-xs text-gray-900">Friends ({{ friends|length }})</h3>
+            <button onclick="closeModal('friends-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="space-y-2 max-h-72 overflow-y-auto">
+            {% for f in friends %}
+            <div class="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-b-0">
+                <a href="{{ url_for('profile', student_id=f.id) }}" class="flex items-center gap-2">
+                    <img src="{{ f.avatar }}" class="w-8 h-8 rounded-full object-cover">
+                    <div>
+                        <div class="font-bold text-xs text-gray-900">{{ f.name }}</div>
+                        <div class="text-[10px] text-gray-500">{{ f.department }}</div>
+                    </div>
+                </a>
+            </div>
+            {% else %}
+            <p class="text-xs text-gray-400 text-center py-4">No friends added yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+function switchProfileTab(tabName) {
+    const tabs = ['grid', 'wall', 'friends'];
+    tabs.forEach(t => {
+        const content = document.getElementById(`profile-tab-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tabName) {
+            content.classList.remove('hidden');
+            btn.classList.add('border-blue-600', 'text-blue-600');
+            btn.classList.remove('border-transparent', 'text-gray-500');
+        } else {
+            content.classList.add('hidden');
+            btn.classList.remove('border-blue-600', 'text-blue-600');
+            btn.classList.add('border-transparent', 'text-gray-500');
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Campus Events & Fests | The College Underground{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Events Header Banner -->
+    <div class="retro-box rounded-md p-4 bg-gradient-to-r from-emerald-800 to-teal-900 text-white shadow-sm flex items-center justify-between">
+        <div>
+            <div class="ivy-seal-text text-sm uppercase tracking-widest text-emerald-200">Campus Happenings</div>
+            <h1 class="text-xl font-bold font-serif tracking-tight mt-0.5">Events, Hackathons & Fest Schedule</h1>
+            <p class="text-xs text-emerald-200 mt-1 max-w-lg">
+                Discover what's happening around the quad, RSVP with friends, or host and edit campus activities.
+            </p>
+        </div>
+        <div>
+            <button onclick="openModal('create-event-modal')" class="bg-white hover:bg-emerald-50 text-emerald-900 text-xs font-bold px-3.5 py-2 rounded shadow transition flex items-center gap-1.5">
+                <i class="fas fa-calendar-plus"></i> Host Event
+            </button>
+        </div>
+    </div>
+
+    <!-- Category Filter Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        {% for cat in ['All', 'Hackathon', 'Cultural Fest', 'Sports', 'Symposium', 'Party'] %}
+        <a href="{{ url_for('events', cat=cat) }}" 
+            class="px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 transition {% if selected_cat == cat %}bg-emerald-700 text-white shadow-sm{% else %}bg-white text-gray-700 hover:bg-gray-100 border border-gray-200{% endif %}">
+            {{ cat }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Events List -->
+    <div class="space-y-5">
+        {% for ev in events %}
+        <div id="event-card-{{ ev.id }}" class="retro-box rounded-md overflow-hidden hover:shadow-md transition">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-12">
+                
+                <!-- Event Image & Date Badge -->
+                <div class="sm:col-span-4 relative bg-gray-900 h-44 sm:h-auto">
+                    <img src="{{ ev.image_url }}" alt="{{ ev.title }}" class="w-full h-full object-cover">
+                    <span class="absolute top-2.5 left-2.5 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                        {{ ev.category }}
+                    </span>
+                </div>
+
+                <!-- Event Details -->
+                <div class="sm:col-span-8 p-4 flex flex-col justify-between space-y-3">
+                    <div>
+                        <div class="flex items-center justify-between text-xs text-emerald-700 font-bold mb-1">
+                            <span><i class="far fa-clock mr-1"></i> {{ ev.date_str }}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-500 font-normal"><i class="fas fa-map-marker-alt mr-1"></i> {{ ev.location }}</span>
+                                <!-- Edit & Delete Event -->
+                                <button onclick="openEditEventModal('{{ ev.id }}', '{{ ev.title|escape }}', '{{ ev.description|escape }}', '{{ ev.category }}', '{{ ev.date_str|escape }}', '{{ ev.location|escape }}', '{{ ev.image_url|escape }}')" class="text-gray-400 hover:text-blue-600 text-xs p-1" title="Edit Event">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                                <button onclick="handleDeleteEvent('{{ ev.id }}')" class="text-gray-400 hover:text-red-600 text-xs p-1" title="Delete Event">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h3 class="font-bold text-base text-gray-900 leading-snug">{{ ev.title }}</h3>
+                        <p class="text-xs text-gray-600 mt-1.5 leading-relaxed">{{ ev.description }}</p>
+                    </div>
+
+                    <!-- Host & Attendees -->
+                    <div class="border-t border-gray-100 pt-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        
+                        <div class="flex items-center gap-3">
+                            <a href="{{ url_for('profile', student_id=ev.host_id) }}" class="flex items-center gap-1.5" title="Hosted by {{ ev.host_name }}">
+                                <img src="{{ ev.host_avatar }}" class="w-6 h-6 rounded-full object-cover">
+                                <span class="text-[11px] text-gray-600 font-medium">Host: <strong class="text-gray-900">{{ ev.host_name.split(' ')[0] }}</strong></span>
+                            </a>
+
+                            <!-- Attendees Preview Stack -->
+                            <div class="flex items-center gap-1.5">
+                                <div class="flex -space-x-2">
+                                    {% for att in ev.attendees %}
+                                    <img src="{{ att.avatar }}" class="w-5 h-5 rounded-full object-cover border border-white" title="{{ att.name }}">
+                                    {% endfor %}
+                                </div>
+                                <span class="text-[11px] text-gray-700 font-bold event-going-count">{{ ev.going_count }} Going</span>
+                            </div>
+                        </div>
+
+                        <!-- RSVP Action Buttons -->
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="handleEventRsvp('{{ ev.id }}', 'going', this)" 
+                                class="rsvp-btn px-3 py-1 rounded text-xs font-bold transition {% if ev.user_rsvp == 'going' %}bg-emerald-600 text-white{% else %}bg-gray-100 hover:bg-gray-200 text-gray-700{% endif %}">
+                                <i class="fas fa-check mr-1"></i> Going
+                            </button>
+
+                            <button onclick="handleEventRsvp('{{ ev.id }}', 'interested', this)" 
+                                class="rsvp-btn px-2.5 py-1 rounded text-xs font-bold transition {% if ev.user_rsvp == 'interested' %}bg-amber-600 text-white{% else %}bg-gray-100 hover:bg-gray-200 text-gray-700{% endif %}">
+                                <i class="far fa-star mr-1"></i> Interested
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Modal: Host Event -->
+<div id="create-event-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-lg w-full p-5 shadow-2xl border border-gray-300">
+        <div class="flex items-center justify-between border-b pb-3 mb-4">
+            <div class="font-bold text-sm text-gray-900 flex items-center gap-2">
+                <i class="fas fa-calendar-check text-emerald-600 text-lg"></i> Host a Campus Event
+            </div>
+            <button onclick="closeModal('create-event-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <form action="{{ url_for('create_event') }}" method="POST" class="space-y-3">
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Event Title</label>
+                <input type="text" name="title" placeholder="e.g. Quad Midnight Jam & Taco Night" required class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Description</label>
+                <textarea name="description" rows="3" placeholder="Tell students what to bring, what to expect, and why they should join..." class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Category</label>
+                    <select name="category" class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500">
+                        <option value="Hackathon">Hackathon</option>
+                        <option value="Cultural Fest">Cultural Fest</option>
+                        <option value="Sports">Sports</option>
+                        <option value="Symposium">Symposium</option>
+                        <option value="Party">Party</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Date & Time</label>
+                    <input type="text" name="date_str" placeholder="e.g. Friday, Oct 10 • 08:00 PM" required class="w-full p-2 text-xs border border-gray-300 rounded">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Location / Venue</label>
+                    <input type="text" name="location" placeholder="e.g. CS Lab 101 or Central Quad" required class="w-full p-2 text-xs border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Banner Image URL</label>
+                    <input type="url" name="image_url" placeholder="https://images.unsplash.com/..." class="w-full p-2 text-xs border border-gray-300 rounded">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('create-event-modal')" class="px-4 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                <button type="submit" class="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded shadow-sm">Publish Event (+20 Karma)</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Edit Event -->
+<div id="edit-event-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-lg w-full p-5 shadow-2xl border border-gray-300">
+        <div class="flex items-center justify-between border-b pb-3 mb-4">
+            <h3 class="font-bold text-sm text-gray-900">Edit Campus Event</h3>
+            <button onclick="closeModal('edit-event-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="edit-event-form" onsubmit="handleSaveEvent(event)" class="space-y-3 text-xs">
+            <input type="hidden" id="edit-event-id" name="event_id">
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Event Title</label>
+                <input type="text" id="edit-event-title" name="title" required class="w-full p-2 border border-gray-300 rounded">
+            </div>
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Description</label>
+                <textarea id="edit-event-desc" name="description" rows="3" class="w-full p-2 border border-gray-300 rounded"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Category</label>
+                    <select id="edit-event-cat" name="category" class="w-full p-2 border border-gray-300 rounded">
+                        <option value="Hackathon">Hackathon</option>
+                        <option value="Cultural Fest">Cultural Fest</option>
+                        <option value="Sports">Sports</option>
+                        <option value="Symposium">Symposium</option>
+                        <option value="Party">Party</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Date & Time</label>
+                    <input type="text" id="edit-event-date" name="date_str" required class="w-full p-2 border border-gray-300 rounded">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Location</label>
+                    <input type="text" id="edit-event-loc" name="location" required class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Banner Image URL</label>
+                    <input type="url" id="edit-event-img" name="image_url" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="closeModal('edit-event-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                <button type="submit" class="px-5 py-2 font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded">Update Event</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

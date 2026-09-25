@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}Leaderboards - Campus Karma & Course Rankings | The College Underground{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Banner -->
+    <div class="retro-box rounded-md p-4 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-900 text-white shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="ivy-seal-text text-sm uppercase tracking-widest text-amber-200">Honor Roll & Reputation</div>
+                <h1 class="text-xl font-bold font-serif tracking-tight mt-0.5">Campus Karma & Department Leaderboards</h1>
+                <p class="text-xs text-amber-100 mt-1 max-w-lg">
+                    Recognizing academic excellence, project builders, hackathon champions, and campus leaders.
+                </p>
+            </div>
+            <div class="hidden sm:block text-3xl text-amber-300">
+                <i class="fas fa-award"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campus Karma Podium (Top 3 Overall) -->
+    <div class="retro-box rounded-md p-5 bg-gradient-to-b from-white to-gray-50">
+        <div class="text-center mb-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">[ The Quad Podium - Top Campus Leaders ]</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 sm:gap-4 items-end max-w-lg mx-auto pt-4 pb-2">
+            
+            <!-- 2nd Place (Silver) -->
+            {% if global_leaderboard|length > 1 %}
+            {% set second = global_leaderboard[1] %}
+            <div class="flex flex-col items-center">
+                <div class="relative mb-2">
+                    <img src="{{ second.avatar }}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-slate-300 shadow">
+                    <span class="absolute -bottom-1 -right-1 bg-slate-200 border border-slate-400 text-slate-800 text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">2</span>
+                </div>
+                <a href="{{ url_for('profile', student_id=second.id) }}" class="font-bold text-xs text-gray-900 text-center truncate max-w-[90px] sm:max-w-[120px] hover:text-blue-600">
+                    {{ second.name.split(' ')[0] }}
+                </a>
+                <div class="text-[10px] text-gray-500">{{ second.department.split(' ')[0] }}</div>
+                <div class="podium-silver w-full rounded-t-lg pt-4 pb-2 mt-2 text-center">
+                    <span class="font-bold text-xs text-slate-700 font-mono">{{ second.karma }} pts</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 1st Place (Gold) -->
+            {% if global_leaderboard|length > 0 %}
+            {% set first = global_leaderboard[0] %}
+            <div class="flex flex-col items-center -mt-6">
+                <i class="fas fa-crown text-amber-400 text-lg mb-1"></i>
+                <div class="relative mb-2">
+                    <img src="{{ first.avatar }}" class="w-18 h-18 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-amber-400 shadow-xl">
+                    <span class="absolute -bottom-1 -right-1 bg-amber-400 border border-amber-600 text-amber-950 text-xs font-black w-6 h-6 rounded-full flex items-center justify-center">1</span>
+                </div>
+                <a href="{{ url_for('profile', student_id=first.id) }}" class="font-bold text-xs sm:text-sm text-gray-900 text-center truncate max-w-[100px] sm:max-w-[140px] hover:text-blue-600">
+                    {{ first.name }}
+                </a>
+                <div class="text-[10px] text-amber-700 font-semibold">{{ first.department }}</div>
+                <div class="podium-gold w-full rounded-t-lg pt-7 pb-3 mt-2 text-center shadow-md">
+                    <span class="font-black text-sm text-amber-900 font-mono">{{ first.karma }} pts</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 3rd Place (Bronze) -->
+            {% if global_leaderboard|length > 2 %}
+            {% set third = global_leaderboard[2] %}
+            <div class="flex flex-col items-center">
+                <div class="relative mb-2">
+                    <img src="{{ third.avatar }}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-amber-600/60 shadow">
+                    <span class="absolute -bottom-1 -right-1 bg-amber-200 border border-amber-700 text-amber-900 text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">3</span>
+                </div>
+                <a href="{{ url_for('profile', student_id=third.id) }}" class="font-bold text-xs text-gray-900 text-center truncate max-w-[90px] sm:max-w-[120px] hover:text-blue-600">
+                    {{ third.name.split(' ')[0] }}
+                </a>
+                <div class="text-[10px] text-gray-500">{{ third.department.split(' ')[0] }}</div>
+                <div class="podium-bronze w-full rounded-t-lg pt-3 pb-2 mt-2 text-center">
+                    <span class="font-bold text-xs text-amber-800 font-mono">{{ third.karma }} pts</span>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- COURSE-WISE LEADERBOARD (Major Requirement) -->
+    <div class="retro-box rounded-md p-4 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-500">[ Course-Wise Standings ]</span>
+                <h2 class="text-base font-bold text-gray-900 font-serif">Department Honors & GPA Leaders</h2>
+            </div>
+
+            <!-- Department Selector Pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                {% for dept in departments %}
+                <a href="{{ url_for('leaderboard', dept=dept) }}" 
+                    class="px-2.5 py-1 rounded text-[11px] font-medium flex-shrink-0 transition {% if selected_dept == dept %}bg-[#3b5998] text-white font-bold{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    {{ dept.split(' ')[0] }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                        <th class="p-2.5 w-12 text-center">Rank</th>
+                        <th class="p-2.5">Student</th>
+                        <th class="p-2.5">Academic Class</th>
+                        <th class="p-2.5 text-center">GPA</th>
+                        <th class="p-2.5 text-center">Projects</th>
+                        <th class="p-2.5 text-center">Campus Karma</th>
+                        <th class="p-2.5 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for s in dept_leaderboard %}
+                    <tr class="hover:bg-blue-50/50 transition">
+                        <td class="p-2.5 text-center font-bold font-mono {% if loop.index == 1 %}text-amber-500{% elif loop.index == 2 %}text-slate-400{% elif loop.index == 3 %}text-amber-700{% else %}text-gray-400{% endif %}">
+                            #{{ loop.index }}
+                        </td>
+                        <td class="p-2.5">
+                            <a href="{{ url_for('profile', student_id=s.id) }}" class="flex items-center gap-2 group">
+                                <img src="{{ s.avatar }}" class="w-8 h-8 rounded-full object-cover">
+                                <div>
+                                    <div class="font-bold text-gray-900 group-hover:text-blue-600">{{ s.name }}</div>
+                                    <div class="text-[10px] text-gray-400">@{{ s.handle }}</div>
+                                </div>
+                            </a>
+                        </td>
+                        <td class="p-2.5 text-gray-600">
+                            {{ s.batch_title }} ('{{ s.batch_year }}')
+                        </td>
+                        <td class="p-2.5 text-center font-bold text-emerald-700 font-mono">
+                            {{ s.gpa }}
+                        </td>
+                        <td class="p-2.5 text-center text-gray-600 font-mono">
+                            {{ s.projects_count }}
+                        </td>
+                        <td class="p-2.5 text-center font-bold text-blue-700 font-mono">
+                            {{ s.karma }}
+                        </td>
+                        <td class="p-2.5 text-right">
+                            <button onclick="pokeStudent('{{ s.id }}', '{{ s.name }}', this)" class="poke-btn text-[11px] text-amber-700 hover:text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                👉 Poke
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

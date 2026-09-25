@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Campus Messenger - Direct Messages | The College Underground{% endblock %}
+
+{% block content %}
+<div class="retro-box rounded-md overflow-hidden bg-white shadow-sm grid grid-cols-1 md:grid-cols-12 min-h-[560px]">
+
+    <!-- Left Sidebar: Conversations & Friends (4 cols) -->
+    <div class="md:col-span-4 border-r border-gray-200 flex flex-col justify-between bg-gray-50/50">
+        <div>
+            <!-- Messenger Header -->
+            <div class="p-3.5 border-b border-gray-200 bg-white flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-sm text-gray-900 font-serif">Campus Messenger</h2>
+                    <span class="text-[11px] text-gray-400">Direct 1-on-1 Messages</span>
+                </div>
+                <span class="text-xs bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">
+                    {{ conversations|length }}
+                </span>
+            </div>
+
+            <!-- Conversations List -->
+            <div class="overflow-y-auto max-h-[480px] divide-y divide-gray-100">
+                {% for c in conversations %}
+                <a href="{{ url_for('messages_view', target_id=c.id) }}" 
+                    class="flex items-center gap-3 p-3 hover:bg-blue-50/70 transition {% if active_target and active_target.id == c.id %}bg-blue-100/70 border-l-4 border-blue-600{% endif %}">
+                    <div class="relative flex-shrink-0">
+                        <img src="{{ c.avatar }}" class="w-10 h-10 rounded-full object-cover border border-gray-300">
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-xs text-gray-900 truncate">{{ c.name }}</span>
+                            {% if c.last_message_time %}
+                            <span class="text-[10px] text-gray-400">{{ c.last_message_time[11:16] }}</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-[11px] text-gray-500 truncate mt-0.5">
+                            {{ c.last_message or (c.department + ' • ' + c.batch_title) }}
+                        </p>
+                    </div>
+                    {% if c.unread_count and c.unread_count > 0 %}
+                    <span class="w-4 h-4 bg-blue-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center flex-shrink-0">
+                        {{ c.unread_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                {% else %}
+                <div class="p-6 text-center text-xs text-gray-400">
+                    <i class="fas fa-paper-plane text-2xl mb-2 text-gray-300"></i>
+                    <p>No conversations yet.</p>
+                    <a href="{{ url_for('directory') }}" class="text-blue-600 font-bold mt-1 inline-block">Browse Directory</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Chat Pane: Message Stream & Composer (8 cols) -->
+    <div class="md:col-span-8 flex flex-col justify-between bg-white">
+        {% if active_target %}
+        
+        <!-- Active Chat Header -->
+        <div class="p-3 border-b border-gray-200 bg-white flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <a href="{{ url_for('profile', student_id=active_target.id) }}">
+                    <img src="{{ active_target.avatar }}" class="w-9 h-9 rounded-full object-cover border border-gray-200 hover:opacity-90">
+                </a>
+                <div>
+                    <a href="{{ url_for('profile', student_id=active_target.id) }}" class="font-bold text-xs text-gray-900 hover:text-blue-600 flex items-center gap-1">
+                        {{ active_target.name }}
+                        <span class="text-[10px] text-gray-400 font-normal">@{{ active_target.handle }}</span>
+                    </a>
+                    <div class="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span> Active on campus • {{ active_target.dorm }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="pokeStudent('{{ active_target.id }}', '{{ active_target.name }}', this)" class="poke-btn text-xs px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded border border-amber-200 font-bold">
+                    👉 Poke
+                </button>
+                <a href="{{ url_for('profile', student_id=active_target.id) }}" class="text-xs px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium">
+                    Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Messages Bubbles Stream -->
+        <div id="messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 max-h-[420px] bg-[#fdfdfd]">
+            {% for msg in chat_messages %}
+            <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}">
+                <div class="flex items-end gap-2 max-w-[75%] {% if msg.sender_id == current_user.id %}flex-row-reverse{% endif %}">
+                    <img src="{{ msg.sender_avatar }}" class="w-6 h-6 rounded-full object-cover mb-1 border border-gray-200">
+                    <div class="{% if msg.sender_id == current_user.id %}bg-blue-600 text-white rounded-t-2xl rounded-bl-2xl rounded-br-xs{% else %}bg-gray-100 text-gray-800 rounded-t-2xl rounded-br-2xl rounded-bl-xs border border-gray-200{% endif %} px-3.5 py-2 text-xs shadow-xs">
+                        <p class="leading-relaxed">{{ msg.content }}</p>
+                        <span class="block text-[9px] mt-1 {% if msg.sender_id == current_user.id %}text-blue-200 text-right{% else %}text-gray-400{% endif %}">
+                            {{ msg.created_at[11:16] if msg.created_at else '' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-12 text-xs text-gray-400">
+                <i class="fas fa-comments text-3xl text-gray-300 mb-2"></i>
+                <p>Start a conversation with {{ active_target.name.split(' ')[0] }}!</p>
+                <span class="text-[11px] text-gray-300">Ask about courses, hackathons, or campus plans.</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Chat Input Composer -->
+        <form onsubmit="handleSendMessage(event, '{{ active_target.id }}', this)" class="p-3 border-t border-gray-200 bg-white flex items-center gap-2">
+            <input type="text" name="content" id="chat-input" placeholder="Type a message to {{ active_target.name.split(' ')[0] }}..." required autocomplete="off"
+                class="flex-1 text-xs bg-gray-100 px-4 py-2.5 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0 transition shadow-sm">
+                <i class="fas fa-paper-plane text-xs"></i>
+            </button>
+        </form>
+
+        {% else %}
+        <div class="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-400">
+            <i class="fas fa-paper-plane text-4xl text-blue-200 mb-3"></i>
+            <h3 class="font-bold text-gray-700 text-sm">Select a classmate to message</h3>
+            <p class="text-xs text-gray-500 mt-1 max-w-sm">
+                Chat 1-on-1 with anyone in the campus directory. Plan projects, coordinate hackathon teams, or catch up on the quad!
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

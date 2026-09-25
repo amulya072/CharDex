@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}The Underground Wire - Campus Confessions | The College Underground{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Confessions Header Banner -->
+    <div class="retro-box rounded-md p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white shadow-sm flex items-center justify-between">
+        <div>
+            <div class="ivy-seal-text text-sm uppercase tracking-widest text-blue-300">Unofficial & Unfiltered</div>
+            <h1 class="text-xl font-bold font-serif tracking-tight mt-0.5">The Underground Wire: Campus Confessions</h1>
+            <p class="text-xs text-blue-200 mt-1 max-w-lg">
+                Late night confessions, library secrets, dining hall reviews, and exam survival stories. 100% anonymous.
+            </p>
+        </div>
+        <div>
+            <button onclick="openModal('create-confession-modal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2 rounded shadow transition flex items-center gap-1.5">
+                <i class="fas fa-mask"></i> Confess
+            </button>
+        </div>
+    </div>
+
+    <!-- Confessions List -->
+    <div class="space-y-4">
+        {% for conf in confessions %}
+        <div id="confession-card-{{ conf.id }}" class="retro-box rounded-md p-4 space-y-3 hover:border-blue-300 transition">
+            
+            <div class="flex items-center justify-between border-b pb-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold">
+                        <i class="fas fa-user-secret"></i>
+                    </span>
+                    <span class="text-xs font-bold text-gray-700">Anonymous Student</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] uppercase font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                        {{ conf.category }}
+                    </span>
+                    <button onclick="handleDeleteConfession('{{ conf.id }}')" class="text-gray-400 hover:text-red-500 text-xs" title="Delete Confession">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-800 leading-relaxed font-medium">
+                "{{ conf.content }}"
+            </p>
+
+            <div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
+                <button onclick="handleUpvoteConfession('{{ conf.id }}', this)" 
+                    class="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 font-bold bg-gray-50 hover:bg-blue-50 px-3 py-1 rounded border border-gray-200 transition">
+                    <i class="fas fa-arrow-up text-blue-600"></i>
+                    <span id="confession-votes-{{ conf.id }}">{{ conf.upvotes }}</span> Upvotes
+                </button>
+
+                <span class="text-[10px] text-gray-400">
+                    <i class="far fa-clock mr-1"></i> {{ conf.created_at[:10] }}
+                </span>
+            </div>
+
+        </div>
+        {% else %}
+        <div class="retro-box rounded-md p-8 text-center text-xs text-gray-400">
+            <p>The wire is quiet. Be the first to drop an anonymous campus confession!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Modal: Submit Confession -->
+<div id="create-confession-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-lg w-full p-5 shadow-2xl border border-gray-300">
+        <div class="flex items-center justify-between border-b pb-3 mb-4">
+            <div class="font-bold text-sm text-gray-900 flex items-center gap-2">
+                <i class="fas fa-mask text-blue-600 text-lg"></i> Drop an Anonymous Confession
+            </div>
+            <button onclick="closeModal('create-confession-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <form action="{{ url_for('api_create_confession') }}" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Category</label>
+                <select name="category" class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                    <option value="Campus Life">Campus Life</option>
+                    <option value="Tech Secrets">Tech Secrets</option>
+                    <option value="Dorm Drama">Dorm Drama</option>
+                    <option value="Exam Banter">Exam Banter</option>
+                    <option value="General">General</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Your Confession</label>
+                <textarea name="content" rows="4" placeholder="Confess something about campus life, professors, library grind, or midnight adventures..." required class="w-full p-3 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="closeModal('create-confession-modal')" class="px-4 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                <button type="submit" class="px-5 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded">Submit Confession</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
