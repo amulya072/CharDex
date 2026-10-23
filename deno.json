@@ -1,0 +1,12 @@
+{
+  "lint": {
+    "include": ["static/js/app.js"],
+    "rules": {
+      "exclude": [
+        "no-unused-vars",
+        "no-window",
+        "no-empty"
+      ]
+    }
+  }
+}

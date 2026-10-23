@@ -1,9 +1,15 @@
 import unittest
 import json
+import os
 from app import app
-from models import init_db
+from models import init_db, DB_PATH
+from seed_data import seed_database
 
 class CollegeNetworkFullTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        seed_database()
+
     def setUp(self):
         app.config['TESTING'] = True
         self.client = app.test_client()

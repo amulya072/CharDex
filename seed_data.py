@@ -7,7 +7,7 @@ from models import init_db, get_db, DB_PATH
 STUDENTS = [
     {
         "roll_no": "2024CS001",
-        "name": "Amulya Patel",
+        "name": "Amulya Srivastava",
         "handle": "amulyap",
         "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
         "banner": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&auto=format&fit=crop&q=80",
