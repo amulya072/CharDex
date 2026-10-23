@@ -1,3 +1,4 @@
+// deno-lint-ignore-file
 /**
  * The College Underground - Unofficial Campus Network
  * Master Frontend Controller (Everything is Editable)
@@ -11,7 +12,7 @@ class SoundEffects {
 
     init() {
         if (!this.ctx) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const AudioContext = globalThis.AudioContext || globalThis.webkitAudioContext;
             if (AudioContext) {
                 this.ctx = new AudioContext();
             }
@@ -144,7 +145,7 @@ function playStory(title, imageUrl, authorName, authorAvatar, caption) {
 
     // Smoothly animate progress bar over 4.5s
     clearTimeout(storyTimer);
-    let start = Date.now();
+    const start = Date.now();
     const duration = 4500;
 
     function frame() {
